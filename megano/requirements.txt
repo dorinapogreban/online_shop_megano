@@ -9,7 +9,7 @@ charset-normalizer==3.3.2
 cleo==2.1.0
 click==8.1.7
 crashtest==0.4.1
-diploma-frontend @ file:///Users/dorinavancea/PycharmProjects/python_django_diploma/diploma-frontend/dist/diploma-frontend-0.6.tar.gz#sha256=8798c9e553cd4c75aa33715ff3e67c180a8f799fdefc20d1c3dbe18fd6f167c0
+diploma-frontend @ file:///Users/dorinavancea/PycharmProjects/python_django_diploma2/diploma-frontend/dist/diploma-frontend-0.6.tar.gz#sha256=0e5e5ecdfc8c35206c8065257940d7428f072264d47a1a54fc5e86bc9f643f6a
 distlib==0.3.7
 Django==4.1.6
 django-debug-toolbar==4.3.0
