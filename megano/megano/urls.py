@@ -26,6 +26,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include("frontend.urls")),
     path("api/", include("myauth.urls")),
+    path("api/", include("shopapp.urls")),
 ]
 
 # Adăugați această linie pentru a asocia ruta MEDIA_URL cu MEDIA_ROOT

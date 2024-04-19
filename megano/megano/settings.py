@@ -48,10 +48,9 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
     # 'debug_toolbar',
-
+    'shopapp.apps.ShopappConfig',
     'myauth.apps.MyauthConfig',
 
-    # 'api',
 ]
 
 MIDDLEWARE = [
