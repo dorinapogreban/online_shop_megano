@@ -1,4 +1,4 @@
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,9 +7,10 @@ from .serializers import ProductSerializer, ReviewSerializer, TagSerializer
 
 
 class ProductDetailView(APIView):
-
+    """Представления для отображения прадукта"""
     serializer_class = ProductSerializer
     parser_classes = (FormParser, MultiPartParser, JSONParser)
+
     def get(self, request, id):
         try:
             print('try')
@@ -25,8 +26,14 @@ class ProductDetailView(APIView):
 
 
 class ProductReviewCreateView(APIView):
+    """Представления для добавления отзыва прадукта"""
     serializer_class = ReviewSerializer
     parser_classes = (FormParser, MultiPartParser, JSONParser)
+    permission_classes = [permissions.IsAuthenticated] #пишем пермиш потому что сюда не авторизованные заходить не могут
+
+    def test_func(self):
+        return self.request.user.is_authenticated
+
     def post(self, request, id):
         print('post')
         serializer = ReviewSerializer(data=request.data)
@@ -55,6 +62,7 @@ class ProductReviewCreateView(APIView):
 
 
 class TagListView(APIView):
+    """Представления для отображения списка тегов"""
     def get(self, request):
         print('tag')
         tags = Tag.objects.all()
@@ -65,6 +73,7 @@ class TagListView(APIView):
 
 
 class TagDetailView(APIView):
+    """Представления для отображения списка тегов"""
     def get(self, request, pk):
         try:
             print('try')

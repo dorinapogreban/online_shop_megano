@@ -30,7 +30,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """
-        Verifică dacă datele sunt valide.
+        Проверяе если данные валидны
         """
         # Verificați dacă username-ul este unic
         username = data.get('username')
@@ -43,6 +43,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class AvatarSerializer(serializers.ModelSerializer):
+    """Сериализатор для аватара пользователя"""
     src = serializers.SerializerMethodField()  # тут возвращаем ссылку на изображение
 
     class Meta:

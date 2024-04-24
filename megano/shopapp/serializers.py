@@ -3,6 +3,8 @@ from .models import Product, Image, Tag, Specification, Review
 
 
 class ImageSerializer(serializers.ModelSerializer):
+    """Сериалайзер для изображений прадукта"""
+
     src = serializers.SerializerMethodField()  # тут возвращаем ссылку на изображение
 
     class Meta:
@@ -14,31 +16,29 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериалайзер для тагов прадукта"""
     class Meta:
         model = Tag
         fields = ['tag_id', 'name']
 
 
 class SpecificationSerializer(serializers.ModelSerializer):
+    """Сериалайзер для спецификаций прадукта"""
     class Meta:
         model = Specification
         fields = ['name', 'value']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    product_id = serializers.IntegerField()  # Adăugăm un câmp pentru a prelua product_id
-
+    """Сериализатор для отзывов прадукта. Доступ имеет только авторизованный пользователь."""
     class Meta:
         model = Review
-        fields = ['author', 'email', 'text', 'rate', 'date', 'product_id']
-
-    def create(self, validated_data):
-        product_id = validated_data.pop('product_id')  # Extragem product_id din datele validate
-        review = Review.objects.create(product_id=product_id, **validated_data)  # Creăm recenzia cu product_id
-        return review
+        fields = ['author', 'email', 'text', 'rate']
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    """Сериалайзер для получения и/или обнавления прадукта."""
+
     images = ImageSerializer(many=True)
     tags = TagSerializer(many=True)
     reviews = ReviewSerializer(many=True)

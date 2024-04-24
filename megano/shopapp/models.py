@@ -72,6 +72,8 @@ from django.db import models
 #
 
 class Product(models.Model):
+    """Модель для хранения прадукта"""
+
     id = models.AutoField(primary_key=True, verbose_name="ID")
     category = models.PositiveIntegerField(verbose_name="Cathegory")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Price")
@@ -83,8 +85,12 @@ class Product(models.Model):
     freeDelivery = models.BooleanField(default=False, verbose_name="FreeDelivery")
     rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0, verbose_name="Rating")
 
+    def __str__(self):
+        return self.title
+
 
 class Image(models.Model):
+    """Модель для хранения изображений прадукта"""
     class Meta:
         verbose_name = "Image"
         verbose_name_plural = "Images"
@@ -94,12 +100,14 @@ class Image(models.Model):
         default="default.png",
         verbose_name="Link",
         blank=True,
+        null=True,
     )
-    alt = models.CharField(max_length=128, blank=True, verbose_name="Description")
+    alt = models.CharField(max_length=128, blank=True, null=True, verbose_name="Description")
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
 
 
 class Tag(models.Model):
+    """Модель для хранения тагов прадукта"""
     class Meta:
         verbose_name = "Tag"
         verbose_name_plural = "Tags"
@@ -108,21 +116,30 @@ class Tag(models.Model):
     name = models.CharField(max_length=50, blank=True, verbose_name="Name")
     product = models.ForeignKey(Product, related_name='tags', on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.name
+
 
 class Review(models.Model):
+    """Модель для хранения  отзывов прадукта"""
     class Meta:
         verbose_name = "Review"
         verbose_name_plural = "Reviews"
 
-    author = models.CharField(max_length=255, verbose_name="Author")
-    email = models.EmailField(unique=True, verbose_name="Email")
-    text = models.TextField(verbose_name="Text")
-    rate = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], default=0, verbose_name="Rating")
-    date = models.DateTimeField(verbose_name="Date")
-    product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
+    author = models.CharField(max_length=255, blank=True, null=True, verbose_name="Author")
+    email = models.EmailField(unique=True, blank=True, null=True, verbose_name="Email")
+    text = models.TextField(blank=True, null=True, verbose_name="Text")
+    rate = models.PositiveSmallIntegerField(blank=True, null=True, validators=[MinValueValidator(1),
+                                            MaxValueValidator(5)], default=1, verbose_name="Rating")
+    date = models.DateTimeField(blank=True, null=True, verbose_name="Date")
+    product = models.ForeignKey(Product, blank=True, null=True, related_name='reviews', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Review for {self.product}: {self.author}"
 
 
 class Specification(models.Model):
+    """Модель для хранения спецификаций прадукта"""
     class Meta:
         verbose_name = "Specification"
         verbose_name_plural = "Specifications"
@@ -130,6 +147,9 @@ class Specification(models.Model):
     name = models.CharField(max_length=100, verbose_name="Name")
     value = models.CharField(max_length=255, verbose_name="Value")
     product = models.ForeignKey(Product, related_name='specifications', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Specification for {self.product}: {self.name}, {self.value}"
 
 
 
