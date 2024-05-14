@@ -25,19 +25,17 @@ class SignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=100)
 
     class Meta:
-        model = User  # Specificăm modelul asociat cu serializerul (dacă există)
-        fields = ("id", "username", "password", "name")  # Specificăm câmpurile care trebuie incluse în serializare
+        model = User
+        fields = ("id", "username", "password", "name")
 
     def validate(self, data):
         """
         Проверяе если данные валидны
         """
-        # Verificați dacă username-ul este unic
+        # Проверка уникальности имени пользователя
         username = data.get('username')
         if User.objects.filter(username=username).exists():
             raise serializers.ValidationError("This username is already in use.")
-
-        # Alte verificări pot fi adăugate aici, cum ar fi validarea parolei
 
         return data
 
@@ -49,7 +47,6 @@ class AvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Avatar
         fields = ["src", "alt"]
-        # extra_kwargs = {'alt': {'required': False}}  # Permiteți valori goale pentru câmpul 'alt'
 
     def get_src(self, obj):
         return obj.src.url
@@ -66,14 +63,13 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ["fullName", "email", "phone", "avatar"]  # тут видим описали только те поля которые мы возвращаем
 
     def update(self, instance, validated_data):
-        # Parsați și actualizați datele primite pentru câmpurile nested
+        # Разбор и обновление полученных данных для вложенных полей
         avatar_data = validated_data.pop('avatar', None)
         if avatar_data:
-            # Actualizați avatarul folosind serializerul AvatarSerializer
+            # Обновление аватара с использованием сериализатора AvatarSerializer
             avatar_serializer = self.fields['avatar']
             avatar_instance = instance.avatar
             avatar_serializer.update(avatar_instance, avatar_data)
-        # Actualizați restul câmpurilor profile
         return super().update(instance, validated_data)
 
 

@@ -2,75 +2,6 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 
-# class Image(models.Model):
-#     class Meta:
-#         verbose_name = "Image"
-#         verbose_name_plural = "Images"
-#
-#     src = models.ImageField(
-#         upload_to="product_image/",
-#         default="default.png",
-#         verbose_name="Link",
-#         blank=True,
-#     )
-#     alt = models.CharField(max_length=128, blank=True, verbose_name="Description")
-#
-#
-# class Tag(models.Model):
-#     class Meta:
-#         verbose_name = "Tag"
-#         verbose_name_plural = "Tags"
-#
-#     tag_id = models.AutoField(primary_key=True)
-#     name = models.CharField(max_length=50, blank=True)
-#
-#
-# class Review(models.Model):
-#     class Meta:
-#         verbose_name = "Review"
-#         verbose_name_plural = "Reviews"
-#
-#     author = models.CharField(max_length=255)
-#     email = models.EmailField(unique=True, verbose_name="Email")
-#     text = models.TextField()
-#     rate = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-#     date = models.DateTimeField()
-#     # product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
-#
-#
-# class Specification(models.Model):
-#     class Meta:
-#         verbose_name = "Specification"
-#         verbose_name_plural = "Specifications"
-#
-#     name = models.CharField(max_length=100)
-#     value = models.CharField(max_length=255)
-
-
-# class Product(models.Model):
-#     """Модель прадукта"""
-#     class Meta:
-#         ordering = ["title", "price"]
-#         verbose_name = "Product"
-#         verbose_name_plural = "Products"
-#
-#     id = models.AutoField(primary_key=True)
-#     category = models.PositiveIntegerField()
-#     price = models.DecimalField(max_digits=10, decimal_places=2)
-#     count = models.PositiveIntegerField()
-#     date = models.DateTimeField()
-#     title = models.CharField(max_length=255)
-#     description = models.TextField()
-#     fullDescription = models.TextField()
-#     freeDelivery = models.BooleanField(default=False)
-#     rating = models.DecimalField(max_digits=3, blank=True, decimal_places=1, default=0.0)
-#
-#     # tags = models.ManyToManyField(Tag, related_name="products", verbose_name="Tags", blank=True)
-#     # reviews = models.ForeignKey(Review, related_name="products", verbose_name="Reviews", blank=True, on_delete=models.CASCADE,)
-#     # specifications = models.ManyToManyField(Specification, related_name="products", verbose_name="Specifications", blank=True)
-#     # images = models.ManyToManyField(Image, related_name="products", verbose_name="Images", blank=True)
-#
-
 class ImageCategory(models.Model):
     """Модель для хранения изображений прадукта"""
     class Meta:
@@ -137,22 +68,25 @@ class Product(models.Model):
     freeDelivery = models.BooleanField(default=False, verbose_name="FreeDelivery")
     rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0, verbose_name="Rating")
     available = models.BooleanField(default=True)
-    # is_sale = models.BooleanField(default=False, verbose_name="Is Sale")
+    limited_edition = models.BooleanField(default=False)
+    sort_index = models.IntegerField()
+    sales_count = models.IntegerField()
 
+    @classmethod
+    def top_products(cls, limit):
+        """
+        Возвращает первые `limit` товаров, отсортированных по sort_index и sales_count.
+        """
+        return cls.objects.order_by('sort_index', '-sales_count')[:limit]
 
-    # popular_tags = models.CharField(max_length=255, blank=True, null=True)  # Adăugăm un câmp pentru etichetele populare
-
-    # def save(self, *args, **kwargs):
-    #     # Calculăm etichetele populare și le actualizăm pe cele ale produsului
-    #     popular_tags = self.calculate_popular_tags()
-    #     self.popular_tags = popular_tags
-    #     super().save(*args, **kwargs)
-    #
-    # def calculate_popular_tags(self):
-    #     # Aici vom face analiza pentru a determina etichetele populare
-    #     # Pentru exemplul nostru, vom returna doar un șir de etichete statice
-    #     return "popular_tag1, popular_tag2, popular_tag3"
-
+    def serialize(self):
+        """
+        Сериализует объект Product в словарь со всей актуальной информацией о продукте.
+        """
+        return {
+            'id': self.id,
+            'category': self.category.serialize(),  # Asigurați-vă că și categoria este serializată corespunzător
+        }
     def __str__(self):
         return self.title
 
@@ -222,7 +156,7 @@ class Specification(models.Model):
 
 class Sale(models.Model):
     """
-    Model pentru informațiile despre vânzări.
+    Модель для информации о продажах.
     """
     id = models.AutoField(primary_key=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Price")
@@ -234,4 +168,22 @@ class Sale(models.Model):
 
     def __str__(self):
         return f"Sale for {self.product.title}"
+
+
+class CartItem(models.Model):
+    """
+    Модель для элемента корзины.
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    count = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.count} x {self.product.title}"
+
+
+class Banner(models.Model):
+    """
+    Модель для баннера.
+    """
+    product = models.OneToOneField(Product, on_delete=models.CASCADE)
 

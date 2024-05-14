@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Product, Image, Tag, Specification, Review, Category, ImageCategory, SubCategory, Sale
+from .models import Product, Image, Tag, Specification, Review, Category, ImageCategory, SubCategory, Sale, CartItem, \
+    Banner
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -118,9 +119,86 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class SaleProductSerializer(serializers.ModelSerializer):
-    product_title = serializers.CharField(source='product.title')  # Accesăm câmpul 'title' din modelul 'Product'
-    product_image = serializers.CharField(source='product.images.first.src')  # Accesăm prima imagine asociată produsului
+    """
+    Сериализатор для продуктов, находящихся на распродаже.
+    """
+    title = serializers.CharField(source='product.title')  # Доступ к полю 'title' модели 'Product'
+    images = serializers.SerializerMethodField()  # Определяем поле 'images' как SerializerMethodField
 
     class Meta:
         model = Sale
-        fields = ['id', 'price', 'salePrice', 'dateFrom', 'dateTo', 'product_title', 'product_image']
+        fields = ['id', 'price', 'salePrice', 'dateFrom', 'dateTo', 'title', 'images']
+
+    def get_images(self, obj):
+        """
+        Получает изображения продукта.
+        """
+        product = obj.product  # Получаем продукт, связанный с продажей
+        images = product.images.all()  # Получаем все изображения, связанные с продуктом
+        return ImageSerializer(images, many=True).data  # Сериализует изображения и возвращает данные
+
+    def to_representation(self, instance):
+        """
+        Преобразует экземпляр в представление.
+        """
+        representation = super().to_representation(instance)
+        representation['images'] = self.get_images(
+            instance)  # Заменяем поле 'images' в сериализованном представлении на изображения, связанные с продуктом
+        return representation
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для элементов корзины.
+    """
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'count']
+
+
+class BannerSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для баннеров.
+    """
+    category = serializers.SerializerMethodField()
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, source='product.price')
+    count = serializers.IntegerField(source='product.count')
+    date = serializers.DateTimeField(source='product.date')
+    title = serializers.CharField(source='product.title')
+    description = serializers.CharField(source='product.description')
+    freeDelivery = serializers.BooleanField(source='product.freeDelivery')
+    images = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
+    reviews = serializers.SerializerMethodField()
+    rating = serializers.DecimalField(max_digits=3, decimal_places=1, source='product.rating')
+
+    class Meta:
+        model = Banner
+        fields = ['id', 'category', 'price', 'count', 'date', 'title', 'description',
+                  'freeDelivery', 'images', 'tags', 'reviews', 'rating']
+
+    def get_category(self, obj):
+        """
+        Получить идентификатор категории продукта.
+        """
+        return obj.product.category.id
+
+    def get_images(self, obj):
+        """
+        Получить изображения продукта.
+        """
+        images = obj.product.images.all()
+        return [{'src': image.src.url, 'alt': image.alt} for image in images]
+
+    def get_tags(self, obj):
+        """
+        Получить теги продукта.
+        """
+        tags = obj.product.tags.all()
+        return [{'id': tag.pk, 'name': tag.name} for tag in tags]
+
+    def get_reviews(self, obj):
+        """
+        Получить количество отзывов о продукте.
+        """
+        return obj.product.reviews.count()

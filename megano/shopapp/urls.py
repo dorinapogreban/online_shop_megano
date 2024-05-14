@@ -9,6 +9,8 @@ from .views import (
     PopularProductsAPIView,
     LimitedProductsAPIView,
     SaleAPIView,
+    CartAPIView,
+    BannerList,
 
 )
 
@@ -23,11 +25,12 @@ urlpatterns = [
     path("product/<int:id>/reviews", ProductReviewCreateView.as_view(), name="product-review"),
     path('tags', TagListView.as_view(), name='tag-list'),
     path('tags/<int:pk>', TagDetailView.as_view(), name='tag-detail'),
-    # path('basket', TagDetailView.as_view(), name='basket'),
+    path('basket', CartAPIView.as_view(), name='basket'),
     path('categories', CategoryAPIView.as_view(), name='categories'),
     path('catalog', CatalogAPIView.as_view(), name='catalog'),
     path('products/popular', PopularProductsAPIView.as_view(), name='products-popular'),
     path('products/limited', LimitedProductsAPIView.as_view(), name='products-limited'),
-    path('sale', SaleAPIView.as_view(), name='sale'),
-    # path('banners', TagDetailView.as_view(), name='banners'),
+    path('sales', SaleAPIView.as_view(), name='sale'),
+    path('banners', BannerList.as_view(), name='banners'),
+
 ]

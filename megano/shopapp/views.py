@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from django.db.models import Count
+
 from rest_framework import status, permissions, generics
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.pagination import PageNumberPagination
@@ -7,8 +7,11 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.request import Request
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Product, Tag, Review, Category, Sale
-from .serializers import ProductSerializer, ReviewSerializer, TagSerializer, CategorySerializer, SaleProductSerializer
+
+from .models import Product, Tag, Category, Sale, Banner
+from .serializers import ProductSerializer, ReviewSerializer, TagSerializer, CategorySerializer, SaleProductSerializer, \
+    BannerSerializer
+from .utils.cart import Cart
 
 
 class ProductDetailView(APIView):
@@ -20,7 +23,7 @@ class ProductDetailView(APIView):
     serializer_class = ProductSerializer
     parser_classes = (FormParser, MultiPartParser, JSONParser)
 
-    def get(self, request, id):
+    def get(self, request: Request, id: int) -> Response:
         """
         Обработка GET-запроса для получения информации о продукте.
         Args:
@@ -30,15 +33,10 @@ class ProductDetailView(APIView):
            Response: Статус выполнения операции и данные продукта или сообщение об ошибке.
         """
         try:
-            print('try')
             product = Product.objects.get(id=id)
-            print(product.title)
             serializer = ProductSerializer(product)
-            print(serializer.data)
-            print('ok')
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
-            print('error Product not found')
             return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -57,7 +55,7 @@ class ProductReviewCreateView(APIView):
 
         return self.request.user.is_authenticated
 
-    def post(self, request, id):
+    def post(self, request: Request, id: int) -> Response:
         """
         Обработка POST-запроса для создания отзыва о продукте.
 
@@ -68,15 +66,10 @@ class ProductReviewCreateView(APIView):
         Returns:
             Response: Статус выполнения операции и данные созданного отзыва или ошибки валидации.
         """
-        print('post')
         serializer = ReviewSerializer(data=request.data)
-        print(serializer)
         if serializer.is_valid():
-            print(serializer.is_valid())
-            serializer.save(product_id=id)  # Furnizăm product_id când salvăm recenzia
-            print('serializer saved')
+            serializer.save(product_id=id) # Предоставляем product_id при сохранении отзыва
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        print('error')
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -86,7 +79,7 @@ class TagListView(APIView):
 
     Обрабатывает GET-запрос и возвращает список всех тегов.
     """
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         """
         Обработка GET-запроса для получения списка всех тегов.
         Args:
@@ -94,11 +87,8 @@ class TagListView(APIView):
         Returns:
             Response: Список всех тегов в формате JSON.
         """
-        print('tag')
         tags = Tag.objects.all()
-        print(tags)
         serializer = TagSerializer(tags, many=True)
-        print(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -108,7 +98,7 @@ class TagDetailView(APIView):
 
     Обрабатывает GET-запрос и возвращает информацию о конкретном теге по его идентификатору.
     """
-    def get(self, request, pk):
+    def get(self, request: Request, pk: int) -> Response:
         """
         Обработка GET-запроса для получения информации о конкретном теге.
         Args:
@@ -118,14 +108,10 @@ class TagDetailView(APIView):
             Response: Информация о теге в формате JSON или код ошибки 404, если тег не найден.
         """
         try:
-            print('try')
             tag = Tag.objects.get(pk=pk)
-            print(tag)
             serializer = TagSerializer(tag)
-            print(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Tag.DoesNotExist:
-            print('error tag not found')
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
@@ -135,18 +121,14 @@ class CategoryAPIView(APIView):
     Returns:
         Response: Список категорий и субкатегорий в формате JSON.
     """
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         """
         Обработка GET-запроса для получения списка категорий и субкатегорий.
         Returns:
             Response: Список категорий и субкатегорий в формате JSON.
         """
-        print('ok')
         categories = Category.objects.all()
-        print(categories)
         serializer = CategorySerializer(categories, many=True)
-        print(serializer)
-        print('yes')
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -155,11 +137,11 @@ class CatalogPagination(PageNumberPagination):
        Пагинация для каталога товаров.
        Позволяет разбить список товаров на страницы с заданным количеством элементов на странице.
        """
-    page_size = 20  # Numărul de elemente pe pagină
+    page_size = 20  # Количество элементов на странице
     page_size_query_param = 'limit'
-    max_page_size = 1000  # Numărul maxim de elemente pe pagină
+    max_page_size = 1000  # Максимальное количество элементов на странице
 
-    def get_paginated_response(self, data) -> Response:
+    def get_paginated_response(self, data: list) -> Response:
         """
         Генерирует ответ с данными и информацией о пагинации.
         Args:
@@ -193,7 +175,7 @@ class CatalogAPIView(generics.ListAPIView):
     ordering_fields = ['rating', 'price', 'reviews', 'date']
     ordering = ['date']
 
-    def get_queryset(self):
+    def get_queryset(self) -> Response:
         """
         Получение кастомного запроса к базе данных для получения списка товаров.
         Returns:
@@ -201,32 +183,32 @@ class CatalogAPIView(generics.ListAPIView):
         """
         queryset = super().get_queryset()
 
-        # Filtrare după nume
+        # Фильтрация по названию
         name = self.request.query_params.get('filter[name]')
         if name:
             queryset = queryset.filter(title__icontains=name)
 
-        # Filtrare după preț minim
+        # Фильтрация по минимальной цене
         min_price = self.request.query_params.get('filter[minPrice]')
         if min_price is not None:
             queryset = queryset.filter(price__gte=min_price)
 
-        # Filtrare după preț maxim
+        # Фильтрация по максимальной цене
         max_price = self.request.query_params.get('filter[maxPrice]')
         if max_price is not None:
             queryset = queryset.filter(price__lte=max_price)
 
-        # Filtrare după livrare gratuită
+        # Фильтрация по бесплатной доставке
         free_delivery = self.request.query_params.get('filter[freeDelivery]')
         if free_delivery == 'true':
             queryset = queryset.filter(freeDelivery=True)
 
-        # Filtrare după disponibilitate
+        # Фильтрация по доступности
         available = self.request.query_params.get('filter[available]')
         if available == 'true':
             queryset = queryset.filter(available=True)
 
-        # Sortare
+        # Сортировка
         sort = self.request.query_params.get('sort')
         if sort:
             queryset = queryset.order_by(sort)
@@ -238,36 +220,38 @@ class PopularProductsAPIView(APIView):
     """
     Представление API, чтобы получить популярные продукты.    """
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         """
-        Получение и возврашение самые популярные продукты.
+        Получает первые 8 продуктов, отсортированных по sort_index и sales_count.
         """
-        queryset = Product.objects.annotate(tag_count=Count('tags')).order_by('-tag_count')[:10]
-        serializer = ProductSerializer(queryset, many=True)
+        top_products = Product.top_products(limit=8)
+        serializer = ProductSerializer(top_products, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class LimitedProductsAPIView(APIView):
     """
-    API view pentru a obține produsele cu o limită specificată.
+    API представление для получения продуктов с указанным лимитом.
     """
 
-    def get(self, request):
+    def get(self, request: Request) -> Response:
         """
-        Obține și returnează toate produsele disponibile.
+        Получает и возвращает все доступные продукты.
         """
-        queryset = Product.objects.all()
-        serializer = ProductSerializer(queryset, many=True)
+        limited_products = Product.objects.filter(limited_edition=True)[:16]  # Первые 16 продуктов с ограниченным тиражом
+        serializer = ProductSerializer(limited_products, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class SaleAPIView(APIView):
     """
-    API view pentru a obține produsele care sunt la vânzare, inclusiv informații despre vânzări.
+    API представление для получения продуктов, которые находятся на распродаже, включая информацию о скидках.
     """
     def get(self, request: Request) -> Response:
+        """
+        Получает продукты на распродаже с информацией о скидках.
+        """
         page_number = request.GET.get("currentPage", 1)
-        print(page_number)
         paginator = Paginator(Sale.objects.all(), 10)
         page = paginator.page(page_number)
         serializer = SaleProductSerializer(page.object_list, many=True)
@@ -276,5 +260,70 @@ class SaleAPIView(APIView):
             "currentPage": page.number,
             "lastPage": paginator.num_pages
         }
-        print(result)
         return Response(data=result, status=status.HTTP_200_OK)
+
+
+class BannerList(APIView):
+    """
+    API представление для получения списка баннеров.
+    """
+    def get(self, request: Request) -> Response:
+        """
+        Получает список всех баннеров.
+        """
+        banners = Banner.objects.all()
+        serializer = BannerSerializer(banners, many=True)
+        return Response(serializer.data,  status=status.HTTP_200_OK)
+
+
+class CartAPIView(APIView):
+    """
+    API представление для работы с корзиной пользователя.
+    """
+    def get(self, request: Request) -> Response:
+        """
+        Получает содержимое корзины пользователя.
+        """
+        cart = Cart(request)
+        basket_items = cart.__iter__()
+        serialized_items = []
+        for item in basket_items:
+            product = item['product']
+            serializer = ProductSerializer(product)
+            serialized_item = serializer.data
+            serialized_item['count'] = item['count']
+            serialized_items.append(serialized_item)
+        return Response(serialized_items, status=status.HTTP_200_OK)
+
+    def post(self, request: Request) -> Response:
+        """
+        Добавляет товар в корзину.
+        """
+        product_id = request.data.get('id')
+        count = request.data.get('count')
+        if product_id and count:
+            try:
+                product = Product.objects.get(id=product_id)
+                cart = Cart(request)
+                cart.add(product_id, count)
+                return Response({"message": "Product added to basket"}, status=status.HTTP_200_OK)
+            except Product.DoesNotExist:
+                return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({"message": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request: Request) -> Response:
+        """
+        Удаляет товар из корзины.
+        """
+        product_id = request.data.get('id')
+        if product_id:
+            try:
+                product = Product.objects.get(id=product_id)
+                cart = Cart(request)
+                cart.remove(product_id)
+                return Response({"message": "Product removed from basket"}, status=status.HTTP_200_OK)
+            except Product.DoesNotExist:
+                return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({"message": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
