@@ -66,11 +66,11 @@ class Product(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name="Description")
     fullDescription = models.TextField(blank=True, null=True, verbose_name="FullDescription")
     freeDelivery = models.BooleanField(default=False, verbose_name="FreeDelivery")
-    rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0, verbose_name="Rating")
+    rating = models.DecimalField(max_digits=3, decimal_places=1, blank=True, null=True, default=0.0, verbose_name="Rating")
     available = models.BooleanField(default=True)
     limited_edition = models.BooleanField(default=False)
-    sort_index = models.IntegerField()
-    sales_count = models.IntegerField()
+    sort_index = models.IntegerField(blank=True, null=True,)
+    sales_count = models.IntegerField(blank=True, null=True,)
 
     @classmethod
     def top_products(cls, limit):
@@ -106,6 +106,9 @@ class Image(models.Model):
     )
     alt = models.CharField(max_length=128, blank=True, null=True, verbose_name="Description")
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.alt
 
 
 class Tag(models.Model):
@@ -148,7 +151,7 @@ class Specification(models.Model):
 
     name = models.CharField(max_length=100, verbose_name="Name")
     value = models.CharField(max_length=255, verbose_name="Value")
-    product = models.ForeignKey(Product, related_name='specifications', on_delete=models.CASCADE)
+    product = models.ManyToManyField(Product, related_name='specifications', blank=True)
 
     def __str__(self):
         return f"Specification for {self.product}: {self.name}, {self.value}"

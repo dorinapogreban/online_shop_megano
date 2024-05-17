@@ -42,9 +42,14 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Specification)
 class SpecificationAdmin(admin.ModelAdmin):
-    list_display = ['name', 'value', 'product']
-    list_filter = ['value', 'product']
+    list_display = ('name', 'value', 'display_products')
+    list_filter = ('name', 'value', 'product__title')
     search_fields = ['name']
+
+    def display_products(self, obj):
+        return ", ".join([product.title for product in obj.product.all()])
+
+    display_products.short_description = 'Products'
 
 
 @admin.register(ImageCategory)

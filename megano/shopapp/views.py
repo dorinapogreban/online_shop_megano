@@ -170,20 +170,30 @@ class CatalogAPIView(generics.ListAPIView):
     filter_backends = [SearchFilter, OrderingFilter]
     pagination_class = CatalogPagination
 
-    filterset_fields = ['category', 'tags']
-    search_fields = ['title', 'description', 'tags']
-    ordering_fields = ['rating', 'price', 'reviews', 'date']
-    ordering = ['date']
-
-    def get_queryset(self) -> Response:
-        """
-        Получение кастомного запроса к базе данных для получения списка товаров.
-        Returns:
-           QuerySet: Кастомный запрос к базе данных для получения списка товаров.
-        """
+    def get_queryset(self):
         queryset = super().get_queryset()
 
-        # Фильтрация по названию
+        # Фильтрация по категории и подкатегории
+        queryset = self.filter_by_category(queryset)
+
+        # Применение других фильтров
+        queryset = self.apply_filters(queryset)
+
+        return queryset
+
+    def filter_by_category(self, queryset):
+        category_id = self.request.query_params.get('category')
+        subcategory_id = self.request.query_params.get('subcategory')
+
+        if subcategory_id:
+            queryset = queryset.filter(category__subcategories=subcategory_id)
+        elif category_id:
+            queryset = queryset.filter(category_id=category_id)
+
+        return queryset
+
+    def apply_filters(self, queryset):
+        # Фильтрация по имени
         name = self.request.query_params.get('filter[name]')
         if name:
             queryset = queryset.filter(title__icontains=name)
@@ -203,15 +213,19 @@ class CatalogAPIView(generics.ListAPIView):
         if free_delivery == 'true':
             queryset = queryset.filter(freeDelivery=True)
 
-        # Фильтрация по доступности
+        # Фильтрация по наличию
         available = self.request.query_params.get('filter[available]')
         if available == 'true':
             queryset = queryset.filter(available=True)
 
         # Сортировка
-        sort = self.request.query_params.get('sort')
-        if sort:
-            queryset = queryset.order_by(sort)
+        sort_by = self.request.query_params.get('sort')
+        sort_type = self.request.query_params.get('sortType')
+
+        if sort_by:
+            if sort_type == 'dec':
+                sort_by = f'-{sort_by}'
+            queryset = queryset.order_by(sort_by)
 
         return queryset
 
