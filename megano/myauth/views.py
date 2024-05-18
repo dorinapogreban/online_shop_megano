@@ -20,20 +20,14 @@ class SignInView(APIView):
     """
 
     def post(self, request: Request) -> Response:
-        print('ok')
         serialized_data = list(request.POST.keys())[0]
         user_data = json.loads(serialized_data)
         username = user_data.get("username")
         password = user_data.get("password")
-
         user = authenticate(request, username=username, password=password)
-        print(user)
         if user is not None:
             login(request, user)
-            print('succes')
             return Response(status=status.HTTP_201_CREATED)
-
-        print('error')
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -42,27 +36,19 @@ class SignUpView(APIView):
     Cоздаём представление, которое будет обрабатывать запрос на регистрацию нового пользователя.
     """
     def post(self, request) -> Response:
-        print('ok')
         serialized_data = list(request.data.keys())[0]
         user_data = json.loads(serialized_data)
         name = user_data.get("name")
         username = user_data.get("username")
         password = user_data.get("password")
-        print('da')
         try:
-            print('try')
             user = User.objects.create_user(username=username, password=password)
-            print(user)
             profile = Profile.objects.create(user=user, fullName=name)
-            print(profile)
             user = authenticate(request, username=username, password=password)
-            print('authenticate')
             if user is not None:
                 login(request, user)
-                print('login')
             return Response(status=status.HTTP_201_CREATED)
         except Exception:
-            print('error')
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -73,9 +59,7 @@ class SignOutView(APIView):
     """
     def post(self, request):
         # Выход пользователя
-        print('ok')
         logout(request)
-        print('yes')
         return Response(status=status.HTTP_200_OK)
 
 
@@ -93,49 +77,45 @@ class ProfileView(APIView):
         return self.request.user.is_authenticated
 
     def get(self, request) -> Response:
+        """
+        Получает профиль пользователя.
+        """
         profile = request.user.profile  #достаем профиль
         serializer = ProfileSerializer(profile, many=False) #отправляем объект в сериалайзер чтобы привести в формат который ждет фронт
         return Response(serializer.data, status=status.HTTP_200_OK) #возвращаем данные
 
     def post(self, request) -> Response:
-
-        #Далее тут описываем Post запрос который описан в контракте
-        #это то присылает фронттак же смотрим в контракт
-        #Данные нужно получить и сериализовать как с GET и после сохранить их ведь это изменения вот так это будет
-        # profile = request.user.profile #достаем профиль
+        """
+        Обрабатывает POST-запрос для обновления профиля.
+        """
         profile = Profile.objects.get(user=request.user)
-        print(profile)
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
-        print(serializer)
-        print(serializer.error_messages)
 
-        print(serializer.is_valid())
-        print(serializer.errors)
         if serializer.is_valid():
-            print(serializer.is_valid())
             serializer.save()
-            print('save')
             return Response(serializer.data)
-        print('ok')
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProfilePasswordUpdateView(APIView):
     """Представления для обнавления пароля пользователя"""
     def post(self, request):
-        # Obțineți profilul utilizatorului autentificat
+        """
+        Обрабатывает POST-запрос для обновления пароля пользователя.
+        """
+        # Получаем профиль аутентифицированного пользователя
         profile_user = request.user.profile
 
-        # Verificați dacă parola există în cerere
+        # Проверяем наличие пароля в запросе
         if profile_user.user.password:
             new_password = request.data.get('newPassword')
-            # Setează noua parolă pentru utilizatorul asociat profilului
+            # Устанавливаем новый пароль для пользователя, связанного с профилем
             profile_user.user.set_password(new_password)
             profile_user.user.save()
-            # Actualizați sesiunea de autentificare pentru a folosi noua parolă
+            # Обновляем сеанс аутентификации для использования нового пароля
             update_session_auth_hash(request, profile_user.user)
 
-            # Serializați profilul actualizat și returnați răspunsul
+            # Сериализуем обновленный профиль и возвращаем ответ
             serializer = ProfileSerializer(profile_user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
@@ -146,26 +126,21 @@ class ProfileAvatarUpdateView(UpdateAPIView):
     """Представления для обнавления аватара пользователя"""
     parser_classes = (MultiPartParser, JSONParser)
     def post(self, request):
-        # Obțineți profilul utilizatorului autentificat
-        print(request.user)
+        """
+        Обрабатывает POST-запрос для обновления аватара пользователя.
+        """
+        # Получаем профиль аутентифицированного пользователя
         profile_user = request.user.profile
-        print(profile_user)
-        print(profile_user.user)
-        print(profile_user.avatar)
-        # Verificați dacă există deja un avatar pentru utilizator și ștergeți-l
+        # Проверяем наличие аватара для пользователя и удаляем его, если существует
         if profile_user.avatar:
             profile_user.avatar.delete()
-            print('avatar dellete')
 
-        # Creați un nou obiect Avatar folosind fișierul încărcat
+        # Создаем новый объект Avatar с помощью загруженного файла
         new_avatar = Avatar.objects.create(src=request.FILES['avatar'])
-        print(new_avatar, "create")
-        # Actualizați avatarul utilizatorului în profil
+        # Обновляем аватар пользователя в профиле
         profile_user.avatar = new_avatar
         profile_user.save()
-        print(profile_user.avatar, "save")
-        # Serializați profilul actualizat și returnați răspunsul
+        # Сериализуем обновленный профиль и возвращаем ответ
         serializer = ProfileAvatarSerializer(profile_user)
-        print(serializer)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
