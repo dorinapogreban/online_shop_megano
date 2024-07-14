@@ -16,15 +16,29 @@ class ImageSerializer(serializers.ModelSerializer):
         model = Image
         fields = ['src', 'alt']
 
+    # def get_src(self, obj):
+    #     """
+    #     Получение ссылки на изображение.
+    #     Args:
+    #         obj: Объект изображения.
+    #     Returns:
+    #         str: Ссылка на изображение.
+    #     """
+    #     return obj.src.url
     def get_src(self, obj):
         """
-        Получение ссылки на изображение.
+        Get the list of image URLs.
         Args:
-            obj: Объект изображения.
+            obj: Image object.
         Returns:
-            str: Ссылка на изображение.
+            list: List of image URLs.
         """
-        return obj.src.url
+        # Assuming that Image model has a ForeignKey to a Product model.
+        product_images = Image.objects.filter(product=obj.product)
+        if product_images.exists():
+            return product_images.first().src.url
+        print(product_images)
+        return None
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -51,7 +65,9 @@ class ReviewSerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     """Сериалайзер для получения и/или обнавления прадукта."""
 
-    images = ImageSerializer(many=True)
+    # images = ImageSerializer(many=True)
+    images = serializers.SerializerMethodField()
+
     tags = TagSerializer(many=True)
     reviews = ReviewSerializer(many=True)
     specifications = SpecificationSerializer(many=True)
@@ -59,7 +75,18 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'category', 'price', 'count', 'date', 'title', 'description', 'fullDescription',
-                  'freeDelivery', 'images', 'tags', 'reviews', 'specifications', 'rating',]
+                  'freeDelivery', 'images', 'tags', 'reviews', 'specifications', 'rating']
+
+    def get_images(self, obj):
+        if obj.images.exists():
+            return ImageSerializer(obj.images.all(), many=True).data
+        else:
+            return []
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['images'] = self.get_images(instance)
+        return data
 
 
 class ImageCategorySerializer(serializers.ModelSerializer):

@@ -7,7 +7,7 @@ class Cart(object):
     """
     Класс, представляющий корзину покупок пользователя.
     """
-    def __init__(self, request):
+    def __init__(self, request, cart_id=None):
         """
         Инициализирует корзину покупок.
 
@@ -15,10 +15,12 @@ class Cart(object):
             request: Запрос Django.
         """
         self.session = request.session
-        cart = self.session.get(settings.CART_SESSION_ID)
-        if not cart:
-            cart = self.session[settings.CART_SESSION_ID] = {}
-        self.cart = cart
+        if cart_id:
+            self.cart = self.session.get(cart_id, {})
+        else:
+            self.cart = self.session.get(settings.CART_SESSION_ID, {})
+        if not self.cart:
+            self.cart = self.session[settings.CART_SESSION_ID] = {}
 
     def add(self, product_id, count=1):
         """
@@ -76,3 +78,8 @@ class Cart(object):
         Возвращает общую стоимость товаров в корзине.
         """
         return sum(Decimal(item['product'].price) * item['count'] for item in self.cart.values())
+
+    def clear(self):
+        # Elimină toate elementele din coș
+        self.session['cart'] = {}
+        self.session.modified = True
