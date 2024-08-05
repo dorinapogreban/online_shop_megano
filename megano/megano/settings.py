@@ -28,7 +28,10 @@ SECRET_KEY = "django-insecure-&6k4lw94s*tga#^&r+3(_x=i6(r7m++*b!=wy@i=$x!zws%qmu
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "0.0.0.0",
+    "127.0.0.1",
+]
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -49,17 +52,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    'frontend',
-
-    'rest_framework',
-    'django_filters',
-    'drf_spectacular',
-    'debug_toolbar',
-    'shopapp.apps.ShopappConfig',
-    'myauth.apps.MyauthConfig',
-    'orderapp.apps.OrderappConfig',
-
+    "frontend",
+    "rest_framework",
+    "django_filters",
+    "drf_spectacular",
+    "debug_toolbar",
+    "shopapp.apps.ShopappConfig",
+    "myauth.apps.MyauthConfig",
+    "orderapp.apps.OrderappConfig",
 ]
 
 MIDDLEWARE = [
@@ -140,8 +140,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'uploads'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "uploads"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -151,21 +151,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
-    "DEFAULT_FILTER_BACKENDS": [
-        'django_filters.rest_framework.DjangoFilterBackend'
-    ],
-    "DEFAULT_SCHEMA_CLASS": 'drf_spectacular.openapi.AutoSchema',
-    'DEFAULT_PARSER_CLASSES': [
-            'rest_framework.parsers.JSONParser',
-            'rest_framework.parsers.FormParser',
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
     ],
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'My Site Project API',
-    'DESCRIPTION': 'My site with shop app and custom auth',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "My Site Project API",
+    "DESCRIPTION": "My site with shop app and custom auth",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
-CART_SESSION_ID = 'cart'
+CART_SESSION_ID = "cart"

@@ -7,6 +7,7 @@ class Cart(object):
     """
     Класс, представляющий корзину покупок пользователя.
     """
+
     def __init__(self, request, cart_id=None):
         """
         Инициализирует корзину покупок.
@@ -32,9 +33,9 @@ class Cart(object):
         """
         product_id = str(product_id)
         if product_id not in self.cart:
-            self.cart[product_id] = {'count': count}
+            self.cart[product_id] = {"count": count}
         else:
-            self.cart[product_id]['count'] += count
+            self.cart[product_id]["count"] += count
         self.save()
 
     def save(self):
@@ -63,7 +64,7 @@ class Cart(object):
         product_ids = self.cart.keys()
         products = Product.objects.filter(id__in=product_ids)
         for product in products:
-            self.cart[str(product.id)]['product'] = product
+            self.cart[str(product.id)]["product"] = product
         for item in self.cart.values():
             yield item
 
@@ -71,15 +72,18 @@ class Cart(object):
         """
         Возвращает общее количество товаров в корзине.
         """
-        return sum(item['count'] for item in self.cart.values())
+        return sum(item["count"] for item in self.cart.values())
 
     def get_total_price(self):
         """
         Возвращает общую стоимость товаров в корзине.
         """
-        return sum(Decimal(item['product'].price) * item['count'] for item in self.cart.values())
+        return sum(
+            Decimal(item["product"].price) * item["count"]
+            for item in self.cart.values()
+        )
 
     def clear(self):
         # Elimină toate elementele din coș
-        self.session['cart'] = {}
+        self.session["cart"] = {}
         self.session.modified = True

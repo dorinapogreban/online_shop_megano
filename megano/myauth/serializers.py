@@ -8,6 +8,7 @@ class SignInSerializer(serializers.ModelSerializer):
     """
     Определяем сериализатор, который будет использоваться для проверки и валидации данных входа пользователя.
     """
+
     username = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True)
 
@@ -20,6 +21,7 @@ class SignUpSerializer(serializers.ModelSerializer):
     """
     Определяем сериализатор, который будет использоваться для проверки и валидации данных регистрации пользователя.
     """
+
     name = serializers.CharField(max_length=100)
     username = serializers.CharField(max_length=100)
     password = serializers.CharField(max_length=100)
@@ -33,7 +35,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         Проверяе если данные валидны
         """
         # Проверка уникальности имени пользователя
-        username = data.get('username')
+        username = data.get("username")
         if User.objects.filter(username=username).exists():
             raise serializers.ValidationError("This username is already in use.")
 
@@ -42,6 +44,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 class AvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для аватара пользователя"""
+
     src = serializers.SerializerMethodField()  # тут возвращаем ссылку на изображение
 
     class Meta:
@@ -60,14 +63,19 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ["fullName", "email", "phone", "avatar"]  # тут видим описали только те поля которые мы возвращаем
+        fields = [
+            "fullName",
+            "email",
+            "phone",
+            "avatar",
+        ]  # тут видим описали только те поля которые мы возвращаем
 
     def update(self, instance, validated_data):
         # Разбор и обновление полученных данных для вложенных полей
-        avatar_data = validated_data.pop('avatar', None)
+        avatar_data = validated_data.pop("avatar", None)
         if avatar_data:
             # Обновление аватара с использованием сериализатора AvatarSerializer
-            avatar_serializer = self.fields['avatar']
+            avatar_serializer = self.fields["avatar"]
             avatar_instance = instance.avatar
             avatar_serializer.update(avatar_instance, avatar_data)
         return super().update(instance, validated_data)

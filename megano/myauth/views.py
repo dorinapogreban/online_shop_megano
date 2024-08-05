@@ -15,8 +15,8 @@ from .serializers import ProfileSerializer, ProfileAvatarSerializer
 
 class SignInView(APIView):
     """
-     Cоздаём представление, которое будет обрабатывать запрос
-      на вход в систему и проверять учетные данные пользователя.
+    Cоздаём представление, которое будет обрабатывать запрос
+     на вход в систему и проверять учетные данные пользователя.
     """
 
     def post(self, request: Request) -> Response:
@@ -35,6 +35,7 @@ class SignUpView(APIView):
     """
     Cоздаём представление, которое будет обрабатывать запрос на регистрацию нового пользователя.
     """
+
     def post(self, request) -> Response:
         serialized_data = list(request.data.keys())[0]
         user_data = json.loads(serialized_data)
@@ -54,9 +55,10 @@ class SignUpView(APIView):
 
 class SignOutView(APIView):
     """
-     Cоздаём представление, которое будет обрабатывать запрос
-      на выход пользователя из системы.
+    Cоздаём представление, которое будет обрабатывать запрос
+     на выход пользователя из системы.
     """
+
     def post(self, request):
         # Выход пользователя
         logout(request)
@@ -71,7 +73,9 @@ class ProfileView(APIView):
 
     serializer_class = ProfileSerializer
     parser_classes = (FormParser, MultiPartParser, JSONParser)
-    permission_classes = [permissions.IsAuthenticated] #пишем пермиш потому что сюда не авторизованные заходить не могут
+    permission_classes = [
+        permissions.IsAuthenticated
+    ]  # пишем пермиш потому что сюда не авторизованные заходить не могут
 
     def test_func(self):
         return self.request.user.is_authenticated
@@ -80,9 +84,11 @@ class ProfileView(APIView):
         """
         Получает профиль пользователя.
         """
-        profile = request.user.profile  #достаем профиль
-        serializer = ProfileSerializer(profile, many=False) #отправляем объект в сериалайзер чтобы привести в формат который ждет фронт
-        return Response(serializer.data, status=status.HTTP_200_OK) #возвращаем данные
+        profile = request.user.profile  # достаем профиль
+        serializer = ProfileSerializer(
+            profile, many=False
+        )  # отправляем объект в сериалайзер чтобы привести в формат который ждет фронт
+        return Response(serializer.data, status=status.HTTP_200_OK)  # возвращаем данные
 
     def post(self, request) -> Response:
         """
@@ -99,6 +105,7 @@ class ProfileView(APIView):
 
 class ProfilePasswordUpdateView(APIView):
     """Представления для обнавления пароля пользователя"""
+
     def post(self, request):
         """
         Обрабатывает POST-запрос для обновления пароля пользователя.
@@ -108,7 +115,7 @@ class ProfilePasswordUpdateView(APIView):
 
         # Проверяем наличие пароля в запросе
         if profile_user.user.password:
-            new_password = request.data.get('newPassword')
+            new_password = request.data.get("newPassword")
             # Устанавливаем новый пароль для пользователя, связанного с профилем
             profile_user.user.set_password(new_password)
             profile_user.user.save()
@@ -119,12 +126,17 @@ class ProfilePasswordUpdateView(APIView):
             serializer = ProfileSerializer(profile_user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'Password field is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Password field is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class ProfileAvatarUpdateView(UpdateAPIView):
     """Представления для обнавления аватара пользователя"""
+
     parser_classes = (MultiPartParser, JSONParser)
+
     def post(self, request):
         """
         Обрабатывает POST-запрос для обновления аватара пользователя.
@@ -136,11 +148,10 @@ class ProfileAvatarUpdateView(UpdateAPIView):
             profile_user.avatar.delete()
 
         # Создаем новый объект Avatar с помощью загруженного файла
-        new_avatar = Avatar.objects.create(src=request.FILES['avatar'])
+        new_avatar = Avatar.objects.create(src=request.FILES["avatar"])
         # Обновляем аватар пользователя в профиле
         profile_user.avatar = new_avatar
         profile_user.save()
         # Сериализуем обновленный профиль и возвращаем ответ
         serializer = ProfileAvatarSerializer(profile_user)
         return Response(serializer.data, status=status.HTTP_200_OK)
-

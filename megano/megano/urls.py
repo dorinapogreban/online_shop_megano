@@ -24,19 +24,16 @@ import debug_toolbar
 # urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
     path("", include("frontend.urls")),
     path("api/", include("myauth.urls")),
     path("api/", include("shopapp.urls")),
     path("api/", include("orderapp.urls")),
-
 ]
 
 # Adăugați această linie pentru a asocia ruta MEDIA_URL cu MEDIA_ROOT
 if settings.DEBUG:
-    urlpatterns.extend(
-        static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    )
+    urlpatterns.extend(static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT))
     urlpatterns = [
-                      path('__debug__/', include(debug_toolbar.urls)),
-                  ] + urlpatterns
+        path("__debug__/", include(debug_toolbar.urls)),
+    ] + urlpatterns
