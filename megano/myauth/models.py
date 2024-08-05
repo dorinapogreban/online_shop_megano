@@ -12,7 +12,9 @@ class Avatar(models.Model):
         blank=True,
         null=True,
     )
-    alt = models.CharField(max_length=128, blank=True, null=True,  verbose_name="Description")
+    alt = models.CharField(
+        max_length=128, blank=True, null=True, verbose_name="Description"
+    )
 
     class Meta:
         verbose_name = "Avatar"
@@ -21,10 +23,13 @@ class Avatar(models.Model):
 
 class Profile(models.Model):
     """Модель профиля пользователя"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     fullName = models.CharField(max_length=100, verbose_name="Full Name")
     email = models.EmailField(unique=True, blank=True, null=True, verbose_name="Email")
-    phone = models.CharField(max_length=15, unique=True, blank=True, null=True, verbose_name="Phone")
+    phone = models.CharField(
+        max_length=15, unique=True, blank=True, null=True, verbose_name="Phone"
+    )
     avatar = models.ForeignKey(
         Avatar,
         on_delete=models.CASCADE,

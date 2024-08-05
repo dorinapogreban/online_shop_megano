@@ -9,8 +9,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .models import Product, Tag, Category, Sale, Banner
-from .serializers import ProductSerializer, ReviewSerializer, TagSerializer, CategorySerializer, SaleProductSerializer, \
-    BannerSerializer
+from .serializers import (
+    ProductSerializer,
+    ReviewSerializer,
+    TagSerializer,
+    CategorySerializer,
+    SaleProductSerializer,
+    BannerSerializer,
+)
 from .utils.cart import Cart
 
 
@@ -20,6 +26,7 @@ class ProductDetailView(APIView):
 
     Позволяет получить информацию о конкретном продукте по его идентификатору.
     """
+
     serializer_class = ProductSerializer
     parser_classes = (FormParser, MultiPartParser, JSONParser)
 
@@ -37,7 +44,9 @@ class ProductDetailView(APIView):
             serializer = ProductSerializer(product)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Product.DoesNotExist:
-            return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ProductReviewCreateView(APIView):
@@ -46,9 +55,12 @@ class ProductReviewCreateView(APIView):
 
     Позволяет пользователям добавлять отзывы о продуктах.
     """
+
     serializer_class = ReviewSerializer
     parser_classes = (FormParser, MultiPartParser, JSONParser)
-    permission_classes = [permissions.IsAuthenticated] #пишем пермиш потому что сюда не авторизованные заходить не могут
+    permission_classes = [
+        permissions.IsAuthenticated
+    ]  # пишем пермиш потому что сюда не авторизованные заходить не могут
 
     def test_func(self):
         """Проверяет, аутентифицирован ли пользователь."""
@@ -68,7 +80,9 @@ class ProductReviewCreateView(APIView):
         """
         serializer = ReviewSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(product_id=id) # Предоставляем product_id при сохранении отзыва
+            serializer.save(
+                product_id=id
+            )  # Предоставляем product_id при сохранении отзыва
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -79,6 +93,7 @@ class TagListView(APIView):
 
     Обрабатывает GET-запрос и возвращает список всех тегов.
     """
+
     def get(self, request: Request) -> Response:
         """
         Обработка GET-запроса для получения списка всех тегов.
@@ -98,6 +113,7 @@ class TagDetailView(APIView):
 
     Обрабатывает GET-запрос и возвращает информацию о конкретном теге по его идентификатору.
     """
+
     def get(self, request: Request, pk: int) -> Response:
         """
         Обработка GET-запроса для получения информации о конкретном теге.
@@ -121,6 +137,7 @@ class CategoryAPIView(APIView):
     Returns:
         Response: Список категорий и субкатегорий в формате JSON.
     """
+
     def get(self, request: Request) -> Response:
         """
         Обработка GET-запроса для получения списка категорий и субкатегорий.
@@ -134,11 +151,12 @@ class CategoryAPIView(APIView):
 
 class CatalogPagination(PageNumberPagination):
     """
-       Пагинация для каталога товаров.
-       Позволяет разбить список товаров на страницы с заданным количеством элементов на странице.
-       """
+    Пагинация для каталога товаров.
+    Позволяет разбить список товаров на страницы с заданным количеством элементов на странице.
+    """
+
     page_size = 20  # Количество элементов на странице
-    page_size_query_param = 'limit'
+    page_size_query_param = "limit"
     max_page_size = 1000  # Максимальное количество элементов на странице
 
     def get_paginated_response(self, data: list) -> Response:
@@ -153,8 +171,8 @@ class CatalogPagination(PageNumberPagination):
         return Response(
             {
                 "items": data,
-                'currentPage': self.page.number,
-                'lastPage': last_page_number,
+                "currentPage": self.page.number,
+                "lastPage": last_page_number,
             }
         )
 
@@ -165,6 +183,7 @@ class CatalogAPIView(generics.ListAPIView):
 
     Позволяет получать список товаров с возможностью фильтрации, сортировки и пагинации.
     """
+
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -182,8 +201,8 @@ class CatalogAPIView(generics.ListAPIView):
         return queryset
 
     def filter_by_category(self, queryset):
-        category_id = self.request.query_params.get('category')
-        subcategory_id = self.request.query_params.get('subcategory')
+        category_id = self.request.query_params.get("category")
+        subcategory_id = self.request.query_params.get("subcategory")
 
         if subcategory_id:
             queryset = queryset.filter(category__subcategories=subcategory_id)
@@ -194,37 +213,37 @@ class CatalogAPIView(generics.ListAPIView):
 
     def apply_filters(self, queryset):
         # Фильтрация по имени
-        name = self.request.query_params.get('filter[name]')
+        name = self.request.query_params.get("filter[name]")
         if name:
             queryset = queryset.filter(title__icontains=name)
 
         # Фильтрация по минимальной цене
-        min_price = self.request.query_params.get('filter[minPrice]')
+        min_price = self.request.query_params.get("filter[minPrice]")
         if min_price is not None:
             queryset = queryset.filter(price__gte=min_price)
 
         # Фильтрация по максимальной цене
-        max_price = self.request.query_params.get('filter[maxPrice]')
+        max_price = self.request.query_params.get("filter[maxPrice]")
         if max_price is not None:
             queryset = queryset.filter(price__lte=max_price)
 
         # Фильтрация по бесплатной доставке
-        free_delivery = self.request.query_params.get('filter[freeDelivery]')
-        if free_delivery == 'true':
+        free_delivery = self.request.query_params.get("filter[freeDelivery]")
+        if free_delivery == "true":
             queryset = queryset.filter(freeDelivery=True)
 
         # Фильтрация по наличию
-        available = self.request.query_params.get('filter[available]')
-        if available == 'true':
+        available = self.request.query_params.get("filter[available]")
+        if available == "true":
             queryset = queryset.filter(available=True)
 
         # Сортировка
-        sort_by = self.request.query_params.get('sort')
-        sort_type = self.request.query_params.get('sortType')
+        sort_by = self.request.query_params.get("sort")
+        sort_type = self.request.query_params.get("sortType")
 
         if sort_by:
-            if sort_type == 'dec':
-                sort_by = f'-{sort_by}'
+            if sort_type == "dec":
+                sort_by = f"-{sort_by}"
             queryset = queryset.order_by(sort_by)
 
         return queryset
@@ -232,7 +251,7 @@ class CatalogAPIView(generics.ListAPIView):
 
 class PopularProductsAPIView(APIView):
     """
-    Представление API, чтобы получить популярные продукты.    """
+    Представление API, чтобы получить популярные продукты."""
 
     def get(self, request: Request) -> Response:
         """
@@ -252,7 +271,9 @@ class LimitedProductsAPIView(APIView):
         """
         Получает и возвращает все доступные продукты.
         """
-        limited_products = Product.objects.filter(limited_edition=True)[:16]  # Первые 16 продуктов с ограниченным тиражом
+        limited_products = Product.objects.filter(limited_edition=True)[
+            :16
+        ]  # Первые 16 продуктов с ограниченным тиражом
         serializer = ProductSerializer(limited_products, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -261,6 +282,7 @@ class SaleAPIView(APIView):
     """
     API представление для получения продуктов, которые находятся на распродаже, включая информацию о скидках.
     """
+
     def get(self, request: Request) -> Response:
         """
         Получает продукты на распродаже с информацией о скидках.
@@ -272,7 +294,7 @@ class SaleAPIView(APIView):
         result = {
             "items": serializer.data,
             "currentPage": page.number,
-            "lastPage": paginator.num_pages
+            "lastPage": paginator.num_pages,
         }
         return Response(data=result, status=status.HTTP_200_OK)
 
@@ -281,19 +303,21 @@ class BannerList(APIView):
     """
     API представление для получения списка баннеров.
     """
+
     def get(self, request: Request) -> Response:
         """
         Получает список всех баннеров.
         """
         banners = Banner.objects.all()
         serializer = BannerSerializer(banners, many=True)
-        return Response(serializer.data,  status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CartAPIView(APIView):
     """
     API представление для работы с корзиной пользователя.
     """
+
     def get(self, request: Request) -> Response:
         """
         Получает содержимое корзины пользователя.
@@ -302,10 +326,10 @@ class CartAPIView(APIView):
         basket_items = cart.__iter__()
         serialized_items = []
         for item in basket_items:
-            product = item['product']
+            product = item["product"]
             serializer = ProductSerializer(product)
             serialized_item = serializer.data
-            serialized_item['count'] = item['count']
+            serialized_item["count"] = item["count"]
             serialized_items.append(serialized_item)
         return Response(serialized_items, status=status.HTTP_200_OK)
 
@@ -313,31 +337,44 @@ class CartAPIView(APIView):
         """
         Добавляет товар в корзину.
         """
-        product_id = request.data.get('id')
-        count = request.data.get('count')
+        product_id = request.data.get("id")
+        count = request.data.get("count")
         if product_id and count:
             try:
                 product = Product.objects.get(id=product_id)
                 cart = Cart(request)
                 cart.add(product_id, count)
-                return Response({"message": "Product added to basket"}, status=status.HTTP_200_OK)
+                return Response(
+                    {"message": "Product added to basket"}, status=status.HTTP_200_OK
+                )
             except Product.DoesNotExist:
-                return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND
+                )
         else:
-            return Response({"message": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def delete(self, request: Request) -> Response:
         """
         Удаляет товар из корзины.
         """
-        product_id = request.data.get('id')
+        product_id = request.data.get("id")
         if product_id:
             try:
                 product = Product.objects.get(id=product_id)
                 cart = Cart(request)
                 cart.remove(product_id)
-                return Response({"message": "Product removed from basket"}, status=status.HTTP_200_OK)
+                return Response(
+                    {"message": "Product removed from basket"},
+                    status=status.HTTP_200_OK,
+                )
             except Product.DoesNotExist:
-                return Response({"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"message": "Product not found"}, status=status.HTTP_404_NOT_FOUND
+                )
         else:
-            return Response({"message": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST
+            )

@@ -4,14 +4,19 @@ from .models import Order, OrderItem
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
-    raw_id_fields = ['product']
+    raw_id_fields = ["product"]
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id',
-                    'deliveryType', 'paymentType',
-                    "status", 'city',
-                    "address", 'createdAt']
-    list_filter = ['status']
+    list_display = [
+        "id",
+        "deliveryType",
+        "paymentType",
+        "status",
+        "city",
+        "address",
+        "createdAt",
+    ]
+    list_filter = ["status"]
     inlines = [OrderItemInline]
